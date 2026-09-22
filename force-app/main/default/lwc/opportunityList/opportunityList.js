@@ -1,4 +1,5 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
+import FORM_FACTOR from '@salesforce/client/formFactor';
 import getOpportunities from '@salesforce/apex/OpportunityController.getOpportunities';
 import getStageOptions from '@salesforce/apex/OpportunityController.getStageOptions';
 
@@ -15,6 +16,9 @@ const COLUMNS = [
 const SEARCH_DELAY = 350;
 
 export default class OpportunityList extends LightningElement {
+    @api defaultStage = '';
+    @api recordsPerPage = 10;
+
     columns = COLUMNS;
     @track opportunities = [];
     stageOptions = [{ label: 'All Stages', value: '' }];
@@ -29,13 +33,10 @@ export default class OpportunityList extends LightningElement {
     isLoading = false;
     errorMessage;
 
-    pageSizeOptions = [
-        { label: '10', value: '10' },
-        { label: '25', value: '25' },
-        { label: '50', value: '50' }
-    ];
 
     connectedCallback() {
+        this.selectedStage = this.defaultStage || '';
+        this.pageSize = this.normalizedPageSize;
         this.loadStages();
         this.loadOpportunities();
     }
@@ -90,6 +91,27 @@ export default class OpportunityList extends LightningElement {
         }
     }
 
+    get normalizedPageSize() {
+        const requested = parseInt(this.recordsPerPage, 10);
+        if (!requested || requested < 1) {
+            return 10;
+        }
+        return Math.min(requested, 100);
+    }
+
+    get isMobile() {
+        return FORM_FACTOR === 'Small';
+    }
+
+    get pageSizeValue() {
+        return String(this.pageSize);
+    }
+
+    get pageSizeOptions() {
+        const sizes = [...new Set([this.normalizedPageSize, 10, 25, 50])].sort((a, b) => a - b);
+        return sizes.map((size) => ({ label: String(size), value: String(size) }));
+    }
+
     get sortFieldApiName() {
         const column = COLUMNS.find((item) => item.fieldName === this.sortedBy);
         return column ? column.fieldNameForSort : 'CloseDate';
@@ -114,6 +136,10 @@ export default class OpportunityList extends LightningElement {
     handlePageSizeChange(event) {
         this.pageSize = parseInt(event.detail.value, 10);
         this.pageNumber = 1;
+        this.loadOpportunities();
+    }
+
+    handleRefresh() {
         this.loadOpportunities();
     }
 

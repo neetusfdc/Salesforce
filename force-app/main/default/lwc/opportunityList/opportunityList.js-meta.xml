@@ -9,4 +9,23 @@
         <target>lightning__HomePage</target>
         <target>lightning__RecordPage</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage,lightning__RecordPage">
+            <property
+                name="defaultStage"
+                type="String"
+                label="Default Opportunity Stage"
+                description="Stage selected when the component loads. Leave blank to show all stages."
+            />
+            <property
+                name="recordsPerPage"
+                type="Integer"
+                label="Records Per Page"
+                description="Number of Opportunities shown per page (1-100)."
+                default="10"
+                min="1"
+                max="100"
+            />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>

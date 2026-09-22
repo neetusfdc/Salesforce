@@ -5,3 +5,18 @@
 .filters {
     align-items: flex-end;
 }
+
+.datatable-scroll {
+    overflow-x: auto;
+}
+
+.pagination {
+    gap: 0.5rem;
+    align-items: center;
+}
+
+@media (max-width: 48em) {
+    .pagination {
+        justify-content: center;
+    }
+}

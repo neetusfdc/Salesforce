@@ -1,5 +1,13 @@
 <template>
     <lightning-card title="Opportunities" icon-name="standard:opportunity">
+        <lightning-button
+            slot="actions"
+            label="Refresh"
+            icon-name="utility:refresh"
+            disabled={isLoading}
+            onclick={handleRefresh}
+        ></lightning-button>
+
         <div class="slds-var-p-horizontal_medium slds-var-p-bottom_medium">
             <div class="filters slds-grid slds-wrap slds-gutters_x-small">
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
@@ -21,7 +29,7 @@
                 <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
                     <lightning-combobox
                         label="Rows per page"
-                        value="10"
+                        value={pageSizeValue}
                         options={pageSizeOptions}
                         onchange={handlePageSizeChange}
                     ></lightning-combobox>
@@ -29,7 +37,15 @@
             </div>
 
             <template lwc:if={errorMessage}>
-                <div class="slds-var-m-top_small slds-text-color_error" role="alert">{errorMessage}</div>
+                <div class="slds-var-m-top_small" role="alert">
+                    <lightning-icon
+                        icon-name="utility:error"
+                        variant="error"
+                        size="x-small"
+                        class="slds-var-m-right_xx-small"
+                    ></lightning-icon>
+                    <span class="slds-text-color_error">{errorMessage}</span>
+                </div>
             </template>
 
             <div class="table-wrapper slds-is-relative slds-var-m-top_small">
@@ -38,28 +54,59 @@
                 </template>
 
                 <template lwc:if={hasRecords}>
-                    <lightning-datatable
-                        key-field="id"
-                        data={opportunities}
-                        columns={columns}
-                        sorted-by={sortedBy}
-                        sorted-direction={sortedDirection}
-                        onsort={handleSort}
-                        hide-checkbox-column
-                    ></lightning-datatable>
+                    <template lwc:if={isMobile}>
+                        <ul class="slds-has-dividers_bottom-space">
+                            <template for:each={opportunities} for:item="opportunity">
+                                <li key={opportunity.id} class="slds-item slds-var-p-vertical_x-small">
+                                    <a href={opportunity.recordUrl} class="slds-text-heading_small">{opportunity.name}</a>
+                                    <p class="slds-text-body_small slds-text-color_weak">{opportunity.accountName}</p>
+                                    <p class="slds-text-body_small">
+                                        {opportunity.stageName} &middot;
+                                        <lightning-formatted-number
+                                            value={opportunity.amount}
+                                            format-style="currency"
+                                        ></lightning-formatted-number>
+                                        &middot;
+                                        <lightning-formatted-date-time
+                                            value={opportunity.closeDate}
+                                            time-zone="UTC"
+                                        ></lightning-formatted-date-time>
+                                    </p>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+
+                    <template lwc:else>
+                        <div class="datatable-scroll">
+                            <lightning-datatable
+                                key-field="id"
+                                data={opportunities}
+                                columns={columns}
+                                sorted-by={sortedBy}
+                                sorted-direction={sortedDirection}
+                                onsort={handleSort}
+                                hide-checkbox-column
+                            ></lightning-datatable>
+                        </div>
+                    </template>
                 </template>
 
                 <template lwc:else>
                     <template lwc:if={isLoading}></template>
                     <template lwc:else>
-                        <p class="slds-var-p-vertical_medium slds-text-align_center slds-text-color_weak">
-                            No opportunities match the current filters.
-                        </p>
+                        <div class="slds-illustration slds-illustration_small slds-var-p-vertical_medium slds-text-align_center">
+                            <lightning-icon icon-name="utility:search" size="small"></lightning-icon>
+                            <p class="slds-text-heading_small slds-var-m-top_x-small">No opportunities found</p>
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                Try a different search term or stage filter.
+                            </p>
+                        </div>
                     </template>
                 </template>
             </div>
 
-            <div class="slds-grid slds-grid_align-spread slds-var-m-top_small">
+            <div class="pagination slds-grid slds-wrap slds-grid_align-spread slds-var-m-top_small">
                 <lightning-button
                     label="Previous"
                     icon-name="utility:chevronleft"
